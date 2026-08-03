@@ -9,7 +9,6 @@ import com.kubeflux.authservice.security.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -28,18 +27,18 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-        return ResponseEntity.badRequest().body(Map.of("message", "Email déjà utilisé"));
+            return ResponseEntity.badRequest().body("Email déjà utilisé");
+        }
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        Role role = "STOCK_MANAGER".equalsIgnoreCase(request.getRole()) ? Role.STOCK_MANAGER : Role.USER;
+        user.setRole(role);
+
+        userRepository.save(user);
+        return ResponseEntity.ok("Compte créé");
     }
-    User user = new User();
-    user.setEmail(request.getEmail());
-    user.setPassword(passwordEncoder.encode(request.getPassword()));
-
-    Role role = "STOCK_MANAGER".equalsIgnoreCase(request.getRole()) ? Role.STOCK_MANAGER : Role.USER;
-    user.setRole(role);
-
-    userRepository.save(user);
-    return ResponseEntity.ok(Map.of("message", "Compte créé"));
-}
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
